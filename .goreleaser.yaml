@@ -39,9 +39,9 @@ builds:
     ldflags:
       - >-
         -s -w
-        -X github.com/kha7iq/pvu/internal/version.Version={{ .Version }}
-        -X github.com/kha7iq/pvu/internal/version.Commit={{ .ShortCommit }}
-        -X github.com/kha7iq/pvu/internal/version.BuildDate={{ .Date }}
+        -X github.com/kha7iq/pvu/internal/version.version={{ .Version }}
+        -X github.com/kha7iq/pvu/internal/version.commit={{ .ShortCommit }}
+        -X github.com/kha7iq/pvu/internal/version.buildDate={{ .Date }}
 
 checksum:
   name_template: "{{ .ProjectName }}_checksums.txt"
@@ -96,6 +96,3 @@ nfpms:
       - src: /usr/bin/kubectl-pvu
         dst: /usr/bin/pvu
         type: symlink
-
-snapshot:
-  version_template: "0.0.0-SNAPSHOT-{{ .ShortCommit }}"
