@@ -1,0 +1,101 @@
+version: 2
+
+project_name: pvu
+
+env:
+  - GO111MODULE=on
+
+before:
+  hooks:
+    - go mod tidy
+
+gomod:
+  proxy: false
+
+builds:
+  - id: kubectl-pvu
+    main: ./cmd/pvu/main.go
+    binary: kubectl-pvu
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm
+      - arm64
+    goarm:
+      - "7"
+    ignore:
+      - goos: windows
+        goarch: arm
+      - goos: windows
+        goarch: arm64
+    mod_timestamp: "{{ .CommitTimestamp }}"
+    flags:
+      - -trimpath
+    ldflags:
+      - >-
+        -s -w
+        -X github.com/kha7iq/pvu/internal/version.Version={{ .Version }}
+        -X github.com/kha7iq/pvu/internal/version.Commit={{ .ShortCommit }}
+        -X github.com/kha7iq/pvu/internal/version.BuildDate={{ .Date }}
+
+checksum:
+  name_template: "{{ .ProjectName }}_checksums.txt"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^chore:"
+      - "^test:"
+      - "Merge pull request"
+      - "Merge branch"
+      - "go mod tidy"
+
+archives:
+  - id: default
+    ids:
+      - kubectl-pvu
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else if eq .Arch "arm" }}armv{{ .Arm }}
+      {{- else }}{{ .Arch }}{{ end }}
+    formats:
+      - tar.gz
+    format_overrides:
+      - goos: windows
+        formats:
+          - zip
+    files:
+      - README.md
+      - LICENSE
+
+nfpms:
+  - id: linux-packages
+    ids:
+      - kubectl-pvu
+    package_name: kubectl-pvu
+    file_name_template: "{{ .PackageName }}_{{ .Version }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+    maintainer: "Abdul Khaliq <a.khaliq@outlook.my>"
+    description: "Inspect Kubernetes pod volumes as a kubectl plugin with CLI and interactive TUI modes"
+    license: MIT
+    formats:
+      - deb
+      - rpm
+      - apk
+    bindir: /usr/bin
+    contents:
+      - src: /usr/bin/kubectl-pvu
+        dst: /usr/bin/pvu
+        type: symlink
+
+snapshot:
+  version_template: "0.0.0-SNAPSHOT-{{ .ShortCommit }}"
